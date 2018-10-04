@@ -128,32 +128,81 @@ def dump_topK(prefix, feeder, topK):
     TOKEN LABEL TOP1 TOP2 ... TOPN B_PER I_PER
     """
     with open('dev/predict.%s' % prefix, 'w') as fp:
+
+        fp.write('\t'.join(['TOKEN', 'LABEL'] +
+                           ['TOP_%d' % (i + 1) for i in range(topK)] +
+                           list(la2idx.keys())) + '\n\n')
+
         for _ in tqdm(range(feeder.step_per_epoch)):
             tokens, chars, labels = feeder.feed()
 
-            out_seqs, out_scores = model.decode(sess, tokens, chars, topK)
-            for i, (preds, scores) in enumerate(zip(out_seqs, out_scores)):
+            out_seqs, out_path_scores, out_position_scores = model.decode(sess, tokens, chars, topK)
+            for i, (preds, path_scores, position_scores) in enumerate(
+                    zip(out_seqs, out_path_scores, out_position_scores)):
                 length = len(preds[0])
 
                 st = tokens[i, :length].tolist()
                 sl = [idx2la[la] for la in labels[i, :length].tolist()]
 
+                # Position score
+                norm_position_scores = np.zeros(shape=(num_classes, length))
+                for pred, position_score in zip(preds, position_scores):
+                    for t in range(length):
+                        norm_position_scores[pred[t], t] += position_score[t]
+                norm_position_scores = norm_position_scores.tolist()
+
+                e = np.array(norm_position_scores)
+                e = e / e.sum(axis=0, keepdims=True)
+                norm_position_scores = [['{:.4f}'.format(e2) for e2 in e1] for e1 in e]
+
+                # Top N
                 preds = [[idx2la[la] for la in pred] for pred in preds]
 
-                for all in zip(*[st, sl, *preds]):
+                for all in zip(*[st, sl, *preds, *norm_position_scores]):
                     fp.write('\t'.join(all) + '\n')
 
-                # Save path scores
-                score_all = sum(scores)
-                norm_scores = [''] * 2 + \
-                              ['{:.4f}'.format(score / score_all) for score in scores] + \
+                # Path scores
+                score_all = sum(path_scores)
+
+                norm_path_scores = [''] * 2 + \
+                                   ['{:.4f}'.format(score / score_all) for score in path_scores] + \
+                                   [''] * topK
+
+                path_scores = [''] * 2 + \
+                              ['{:.4f}'.format(score) for score in path_scores] + \
                               [''] * topK
-                fp.write('\t'.join(scores) + '\n')
-                fp.write('\t'.join(norm_scores) + '\n')
+
+                fp.write('\t'.join(path_scores) + '\n')
+                fp.write('\t'.join(norm_path_scores) + '\n')
 
                 fp.write('\n')
 
 
+def restore_zeros(prefix):
+    # Restore zeros
+    with open('data/%s.txt' % prefix) as fin1:
+        with open('dev/predict.%s' % prefix) as fin2:
+            with open('eval/predict.%s' % prefix, 'w') as fout:
+                fout.write(fin2.readline())
+                fout.write(fin2.readline())
+
+                for row1 in fin1:
+                    if row1 == '\n':
+                        fout.write(fin2.readline())
+                        fout.write(fin2.readline())
+                        fout.write(fin2.readline())
+                    else:
+                        row2 = fin2.readline()
+                        data1 = row1.split(' ')
+                        data2 = row2.split('\t')
+                        data2[0] = data1[0]
+                        fout.write('\t'.join(data2))
+
+
 # dump_topK('train', train_feeder, 10)
-# dump_topK('dev', val_feeder, 10)
+# dump_topK('valid', val_feeder, 10)
 dump_topK('test', test_feeder, 10)
+
+# restore_zeros('train')
+# restore_zeros('valid')
+restore_zeros('test')

@@ -304,18 +304,19 @@ class ElmoModel(object):
 
         scores, trans_params, lengths = sess.run([self.unary_potentials, self.trans_params, self.length], input_feed)
 
-        out_seqs, out_scores = [], []
+        out_seqs, out_path_scores, out_position_scores = [], [], []
         for score, length in zip(scores, lengths):
             score = score[:length, :]
 
-            viterbi, viterbi_score = viterbi_decode_topk(
+            viterbi, path_score, position_score = viterbi_decode_topk(
                 score,
                 trans_params,
                 topK
             )
 
             out_seqs.append(viterbi)
-            out_scores.append(viterbi_score)
+            out_path_scores.append(path_score)
+            out_position_scores.append(position_score)
 
         '''
         viterbi, viterbi_score = tf.contrib.crf.viterbi_decode(
@@ -331,11 +332,11 @@ class ElmoModel(object):
             trans_params,
             topK
         )
+        
+        for a, b in zip(viterbi_score, viterbi):
+            print("{:<20} {}".format(a, b))
+
+        return viterbi, viterbi_score
         '''
 
-        # for a, b in zip(viterbi_score, viterbi):
-        #     print("{:<20} {}".format(a, b))
-
-        # return viterbi, viterbi_score
-
-        return out_seqs, out_scores
+        return out_seqs, out_path_scores, out_position_scores

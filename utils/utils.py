@@ -101,12 +101,13 @@ def viterbi_decode_topk(score, transition_params, topK=1):
     Args:
         score: A [seq_len, num_tags] matrix of unary potentials.
         transition_params: A [num_tags, num_tags] matrix of binary potentials.
-        k: Top K
+        topK: Top K
 
     Returns:
-        viterbi: A [seq_len] list of integers containing the highest scoring tag
+        viterbi: A [topK, seq_len] list of integers containing the highest scoring tag
           indices.
-        viterbi_score: A float containing the score for the Viterbi sequence.
+        path_score: A [topK] list of floats containing the score for the Viterbi sequence.
+        position_score: A [topK, seq_len] list of floats containing the score for each position.
     """
 
     seq_len, num_tags = score.shape
@@ -133,23 +134,35 @@ def viterbi_decode_topk(score, transition_params, topK=1):
     v = v.flatten()
 
     args = np.argsort(-v)[:topK]
-    scores = v[args]
+    path_scores = v[args]
 
     sequences = []
+    position_scores = []
     for k in range(topK):
         viterbi = [args[k]]
+        viterbi_score = []
 
         for t in range(seq_len - 1, 0, -1):
             last = viterbi[-1]
             id1 = last // num_tags
             id2 = last % num_tags
             viterbi.append(backpointers[id1, t, id2])
+            viterbi_score.append(trellis[id1, t, id2])
+
+        last = viterbi[-1]
+        # initial tate
+        id1 = last // num_tags
+        id2 = last % num_tags
+        viterbi_score.append(trellis[id1, 0, id2])
 
         viterbi.reverse()
         viterbi = [x % num_tags for x in viterbi]
         sequences.append(viterbi)
 
-    return sequences, scores
+        viterbi_score.reverse()
+        position_scores.append(viterbi_score)
+
+    return sequences, path_scores, position_scores
 
 
 def viterbi_decode(score, transition_params):

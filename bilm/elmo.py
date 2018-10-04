@@ -89,7 +89,7 @@ def weight_layers(name, bilm_ops, l2_coef=None,
                 if do_layer_norm:
                     pieces.append(w * _do_ln(tf.squeeze(t, squeeze_dims=1)))
                 else:
-                    pieces.append(w * tf.squeeze(t, squeeze_dims=1))
+                    pieces.append(w * tf.squeeze(t, axis=1))
             sum_pieces = tf.add_n(pieces)
 
             # get the regularizer 

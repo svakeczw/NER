@@ -9,7 +9,6 @@ import tensorflow as tf
 
 from utils.feeder.LSTMCNNCRFeeder import LSTMCNNCRFeeder
 from utils.parser import parse_conll2003
-from utils.conlleval import evaluate
 from utils.checkmate import best_checkpoint
 
 from model.Elmo import ElmoModel
@@ -156,9 +155,19 @@ def dump_topK(prefix, feeder, topK):
                 norm_position_scores = [['{:.4f}'.format(e2) for e2 in e1] for e1 in e]
 
                 # Top N
-                preds = [[idx2la[la] for la in pred] for pred in preds]
+                e = np.array(position_scores)
+                e = e / e.sum(axis=0, keepdims=True)
 
-                for all in zip(*[st, sl, *preds, *norm_position_scores]):
+                norm_preds = [[''] * length for _ in range(topK)]
+                for k in range(topK):
+                    pred = preds[k]
+                    position_score = e[k]
+                    for t in range(length):
+                        norm_preds[k][t] = '{}:{:.4f}'.format(idx2la[pred[t]], position_score[t])
+
+                # preds = [[idx2la[la] for la in pred] for pred in preds]
+
+                for all in zip(*[st, sl, *norm_preds, *norm_position_scores]):
                     fp.write('\t'.join(all) + '\n')
 
                 # Path scores
@@ -166,11 +175,11 @@ def dump_topK(prefix, feeder, topK):
 
                 norm_path_scores = [''] * 2 + \
                                    ['{:.4f}'.format(score / score_all) for score in path_scores] + \
-                                   [''] * topK
+                                   [''] * num_classes
 
                 path_scores = [''] * 2 + \
                               ['{:.4f}'.format(score) for score in path_scores] + \
-                              [''] * topK
+                              [''] * num_classes
 
                 fp.write('\t'.join(path_scores) + '\n')
                 fp.write('\t'.join(norm_path_scores) + '\n')
@@ -199,10 +208,10 @@ def restore_zeros(prefix):
                         fout.write('\t'.join(data2))
 
 
-# dump_topK('train', train_feeder, 10)
-# dump_topK('valid', val_feeder, 10)
+dump_topK('train', train_feeder, 10)
+dump_topK('valid', val_feeder, 10)
 dump_topK('test', test_feeder, 10)
 
-# restore_zeros('train')
-# restore_zeros('valid')
+restore_zeros('train')
+restore_zeros('valid')
 restore_zeros('test')

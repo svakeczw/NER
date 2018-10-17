@@ -163,6 +163,13 @@ def dump_topK(prefix, feeder, topK):
                     pred = preds[k]
                     position_score = e[k]
                     for t in range(length):
+                        '''
+                        if preds[0][t] == preds[1][t] and preds[1][t] == preds[2][t]:
+                            norm_preds[k][t] = '{}:{:.4f}'.format(idx2la[pred[t]], 1.0)
+                        else:
+                            norm_preds[k][t] = '{}:{:.4f}'.format(idx2la[pred[t]], position_score[t])
+                        '''
+
                         norm_preds[k][t] = '{}:{:.4f}'.format(idx2la[pred[t]], position_score[t])
 
                 # preds = [[idx2la[la] for la in pred] for pred in preds]

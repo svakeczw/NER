@@ -48,6 +48,30 @@ class ElmoModel(object):
         self.elmo_mode = elmo_mode
         self.elmo_batcher = elmo_batcher
 
+        self.mask1 = tf.constant([
+            [1, 1, 1, 1, 1, 0, 0, 0, 1],
+            [1, 1, 1, 1, 0, 1, 0, 0, 1],
+            [1, 1, 1, 1, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 0, 0, 0, 1, 1],
+            [1, 1, 1, 1, 1, 0, 0, 0, 1],
+            [1, 1, 1, 1, 0, 1, 0, 0, 1],
+            [1, 1, 1, 1, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 0, 0, 0, 1, 1],
+            [1, 1, 1, 1, 0, 0, 0, 0, 1],
+        ], dtype=tf.float32)
+
+        self.mask2 = tf.constant([
+            [0, 0, 0, 0, 0, -1e10, -1e10, -1e10, 0],
+            [0, 0, 0, 0, -1e10, 0, -1e10, -1e10, 0],
+            [0, 0, 0, 0, -1e10, -1e10, 0, -1e10, 0],
+            [0, 0, 0, 0, -1e10, -1e10, -1e10, 0, 0],
+            [0, 0, 0, 0, 0, -1e10, -1e10, -1e10, 0],
+            [0, 0, 0, 0, -1e10, 0, -1e10, -1e10, 0],
+            [0, 0, 0, 0, -1e10, -1e10, 0, -1e10, 0],
+            [0, 0, 0, 0, -1e10, -1e10, -1e10, 0, 0],
+            [0, 0, 0, 0, -1e10, -1e10, -1e10, -1e10, 0],
+        ], dtype=tf.float32)
+
         self._build_graph()
 
     def _add_placeholders(self):
@@ -204,6 +228,9 @@ class ElmoModel(object):
         self.ll, self.trans_params = tf.contrib.crf.crf_log_likelihood(
             self.unary_potentials, self.labels, self.length
         )
+
+        self.trans_params = tf.multiply(self.trans_params, self.mask1) + self.mask2
+
         self.viterbi_sequence, _ = tf.contrib.crf.crf_decode(
             self.unary_potentials, self.trans_params, tf.cast(self.length, tf.int32)
         )

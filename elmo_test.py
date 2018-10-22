@@ -84,6 +84,7 @@ config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
 best_checkpoint = best_checkpoint('checkpoints/best/', True)
+# best_checkpoint = 'checkpoints/model.ckpt-1'
 sess.run(tf.tables_initializer())
 saver.restore(sess, best_checkpoint)
 
@@ -216,9 +217,9 @@ def restore_zeros(prefix):
 
 
 dump_topK('train', train_feeder, 10)
-dump_topK('valid', val_feeder, 10)
-dump_topK('test', test_feeder, 10)
+# dump_topK('valid', val_feeder, 10)
+# dump_topK('test', test_feeder, 10)
 
 restore_zeros('train')
-restore_zeros('valid')
-restore_zeros('test')
+# restore_zeros('valid')
+# restore_zeros('test')

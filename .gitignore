@@ -3,6 +3,7 @@ dev/
 logs/
 eval/
 resources/
+eval/
 
 ### Python template
 # Byte-compiled / optimized / DLL files

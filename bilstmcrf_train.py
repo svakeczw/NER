@@ -11,6 +11,7 @@ from utils.feeder.LSTMCRFeeder import LSTMCRFeeder
 from utils.feature_extractor import FeatureExtractor
 from utils.parser import parse_conll2003
 from utils.conlleval import evaluate
+from utils.checkmate import BestCheckpointSaver, best_checkpoint
 
 from model.BiLSTMCRF import BiLSTMCRFModel
 
@@ -78,7 +79,15 @@ max_length = max(
 )
 vocab_size = len(w2idx)
 
-model = BiLSTMCRFModel(True, fe.feat_size, vocab_size, 50, 256, num_classes, max_length, 0.001, 0.5)
+model = BiLSTMCRFModel(True,
+                       fe.feat_size,
+                       vocab_size,
+                       50,    # Word embedding size
+                       200,   # LSTM state size
+                       num_classes,
+                       max_length,
+                       0.001,       # Learning Rate
+                       0.5)
 
 print('Start training...')
 print('Train size = %d' % len(train_x))
@@ -90,6 +99,11 @@ start_epoch = 1
 max_epoch = 20
 
 saver = tf.train.Saver(max_to_keep=10)
+best_saver = BestCheckpointSaver(
+    save_dir='checkpoints/best',
+    num_to_keep=1,
+    maximize=True
+)
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -166,6 +180,7 @@ for epoch in range(start_epoch, max_epoch + 1):
     '''
 
     saver.save(sess, 'checkpoints/model.ckpt', global_step=epoch)
+    best_saver.handle(f1, sess, epoch)
 
     logging.info('')
     train_feeder.next_epoch()

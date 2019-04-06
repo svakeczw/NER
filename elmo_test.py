@@ -145,19 +145,19 @@ def dump_topK(prefix, feeder, topK):
                 sl = [idx2la[la] for la in labels[i, :length].tolist()]
 
                 # Position score
-                norm_position_scores = np.zeros(shape=(num_classes, length))
-                for pred, position_score in zip(preds, position_scores):
-                    for t in range(length):
-                        norm_position_scores[pred[t], t] += position_score[t]
-                norm_position_scores = norm_position_scores.tolist()
+                # norm_position_scores = np.zeros(shape=(num_classes, length))
+                # for pred, position_score in zip(preds, position_scores):
+                #     for t in range(length):
+                #         norm_position_scores[pred[t], t] += position_score[t]
+                # norm_position_scores = norm_position_scores.tolist()
 
-                e = np.array(norm_position_scores)
-                e = e / e.sum(axis=0, keepdims=True)
+                e = np.array(position_scores).T
+                # e = e / e.sum(axis=0, keepdims=True)
                 norm_position_scores = [['{:.4f}'.format(e2) for e2 in e1] for e1 in e]
 
                 # Top N
-                e = np.array(position_scores)
-                e = e / e.sum(axis=0, keepdims=True)
+                e = np.array(path_scores)
+                # e = e / e.sum(axis=0, keepdims=True)
 
                 norm_preds = [[''] * length for _ in range(topK)]
                 for k in range(topK):
@@ -179,7 +179,8 @@ def dump_topK(prefix, feeder, topK):
                     fp.write('\t'.join(all) + '\n')
 
                 # Path scores
-                score_all = sum(path_scores)
+                path_scores = path_scores[-1]
+                score_all = path_scores.sum()
 
                 norm_path_scores = [''] * 2 + \
                                    ['{:.4f}'.format(score / score_all) for score in path_scores] + \
@@ -217,9 +218,9 @@ def restore_zeros(prefix):
 
 
 dump_topK('train', train_feeder, 10)
-# dump_topK('valid', val_feeder, 10)
+dump_topK('valid', val_feeder, 10)
 # dump_topK('test', test_feeder, 10)
 
 restore_zeros('train')
-# restore_zeros('valid')
+restore_zeros('valid')
 # restore_zeros('test')

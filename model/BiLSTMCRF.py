@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from utils.utils import viterbi_decode_topk
+from utils.utils import viterbi_decode_topk, load_train_vocab, load_pretrained_glove
 
 
 class BiLSTMCRFModel(object):
@@ -43,22 +43,22 @@ class BiLSTMCRFModel(object):
 
         self._build_graph()
 
-    def _load_pretrained_senna(self):
-        vocab = []
-        with open('senna/pretrained.vocab') as fp:
-            for row in fp:
-                vocab.append(row.strip())
-        emb = np.genfromtxt('senna/pretrained.emb', delimiter=' ', dtype=np.float)
+    # def _load_pretrained_senna(self):
+    #     vocab = []
+    #     with open('senna/pretrained.vocab') as fp:
+    #         for row in fp:
+    #             vocab.append(row.strip())
+    #     emb = np.genfromtxt('senna/pretrained.emb', delimiter=' ', dtype=np.float)
 
-        return vocab, emb
+        # return vocab, emb
 
-    def _load_train_vocab(self):
-        vocab = []
-        with open('dev/train.vocab') as fp:
-            for row in fp:
-                vocab.append(row.strip())
+    # def _load_train_vocab(self):
+    #     vocab = []
+    #     with open('dev/train.vocab') as fp:
+    #         for row in fp:
+    #             vocab.append(row.strip())
 
-        return vocab
+        # return vocab
 
     def _add_placeholders(self):
         self._tokens = tf.placeholder(tf.string, [None, self.max_length])
@@ -75,8 +75,9 @@ class BiLSTMCRFModel(object):
     def _add_embedding(self):
         with tf.variable_scope('embedding'):
             if self.pre_embedding:
-                pretrained_vocab, pretrained_embs = self._load_pretrained_senna()
-                train_vocab = self._load_train_vocab()
+                # pretrained_vocab, pretrained_embs = self._load_pretrained_senna()
+                pretrained_vocab, pretrained_embs = load_pretrained_glove()
+                train_vocab, _ = load_train_vocab()
                 only_in_train = list(set(train_vocab) - set(pretrained_vocab))
                 vocab = pretrained_vocab + only_in_train
 

@@ -129,15 +129,16 @@ def viterbi_decode_topk(score, transition_params, topK=1):
             trellis[k, t] = score[t] + v[args[k, :], np.arange(num_tags)]
             backpointers[k, t] = args[k, :]
 
+    position_scores = trellis[0]
+
     # Decode topK
     v = trellis[:, -1, :]  # [topK, num_tags]
     v = v.flatten()
 
     args = np.argsort(-v)[:topK]
-    path_scores = v[args]
 
     sequences = []
-    position_scores = []
+    path_scores = []
     for k in range(topK):
         viterbi = [args[k]]
         viterbi_score = []
@@ -160,7 +161,9 @@ def viterbi_decode_topk(score, transition_params, topK=1):
         sequences.append(viterbi)
 
         viterbi_score.reverse()
-        position_scores.append(viterbi_score)
+        path_scores.append(viterbi_score)
+
+    path_scores = np.array(path_scores)
 
     return sequences, path_scores, position_scores
 

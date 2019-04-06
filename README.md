@@ -19,6 +19,10 @@ et. al., 2018](https://arxiv.org/pdf/1802.05365.pdf).
 | Peters et. al | CoNLL 2003 | 92.22(+/-0.10)   |
 | Ours          | CoNLL 2003 | 92.23   |
 
+### Prepare Data
+1. Download pre-trained word vector from [http://nlp.stanford.edu/data/glove.6B.zip](http://nlp.stanford.edu/data/glove.6B.zip), unzip `glove.6B.50d.txt` to `resources/pretrained/glove`.
+2. Download pre-trained elmo models [elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5](https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5) and [elmo_2x1024_128_2048cnn_1xhighway_options.json](https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json), put them in `resources/elmo`.
+
 ### Train
 
 ```

@@ -14,7 +14,8 @@ class ElmoModel(object):
 
     Attributes:
         num_classes: number of classes
-        max_length: max length of sentence
+        max_seq_length: max length of sentence
+        max_word_length: max length of word
         learning_rate: learning rate
     """
 
@@ -55,7 +56,6 @@ class ElmoModel(object):
         self.chars = tf.placeholder(tf.string, [None, self.max_seq_length, self.max_word_length])
         self.dropout = tf.placeholder(tf.float32)
         self.labels = tf.placeholder(tf.int32, [None, self.max_seq_length])
-        self.length = tf.count_nonzero(self.tokens, axis=1)
 
         # elmo
         self.elmo_p = tf.placeholder(tf.int32, [None, None, None])
@@ -67,8 +67,8 @@ class ElmoModel(object):
                 # pretrained_vocab, pretrained_embs = load_pretrained_senna()
                 pretrained_vocab, pretrained_embs = load_pretrained_glove()
 
-                only_in_train = list(set(train_word_vocab) - set(pretrained_vocab))
-                vocab = pretrained_vocab + only_in_train
+                only_in_train_vocab = list(set(train_word_vocab) - set(pretrained_vocab))
+                vocab = ['<pad>'] + pretrained_vocab + only_in_train_vocab
 
                 vocab_lookup = tf.contrib.lookup.index_table_from_tensor(
                     mapping=tf.constant(vocab),
@@ -76,6 +76,12 @@ class ElmoModel(object):
                 )
                 word_string_tensor = vocab_lookup.lookup(self.tokens)
 
+                pad_embs = tf.get_variable(
+                    name='embs_pad',
+                    shape=[1, self.word_embed_size],
+                    initializer=tf.initializers.zeros(),
+                    trainable=True
+                )
                 pretrained_embs = tf.get_variable(
                     name='embs_pretrained',
                     initializer=tf.constant_initializer(np.asarray(pretrained_embs), dtype=tf.float32),
@@ -84,7 +90,7 @@ class ElmoModel(object):
                 )
                 train_embs = tf.get_variable(
                     name='embs_only_in_train',
-                    shape=[len(only_in_train), self.word_embed_size],
+                    shape=[len(only_in_train_vocab), self.word_embed_size],
                     initializer=tf.contrib.layers.xavier_initializer(),
                     trainable=True
                 )
@@ -94,7 +100,7 @@ class ElmoModel(object):
                     initializer=tf.contrib.layers.xavier_initializer(),
                     trainable=True
                 )
-                word_embeddings = tf.concat([pretrained_embs, train_embs, unk_embs], axis=0)
+                word_embeddings = tf.concat([pad_embs, pretrained_embs, train_embs, unk_embs], axis=0)
             else:
                 word_embeddings = tf.get_variable(
                     name='embeds_word',
@@ -105,6 +111,7 @@ class ElmoModel(object):
                 )
                 word_string_tensor = vocab_lookup.lookup(self.tokens)
 
+            self.length = tf.count_nonzero(word_string_tensor, axis=1)
             self.word_embedding_layer = tf.nn.embedding_lookup(word_embeddings, word_string_tensor)
 
             char_embeddings = tf.get_variable(
@@ -210,11 +217,11 @@ class ElmoModel(object):
         self.loss = -tf.reduce_sum(self.ll)
 
     def _add_train_op(self):
-        learning_rate = decay_learning_rate(self.learning_rate,
-                                            self.global_step,
-                                            878,
-                                            0.05)
-        self.lr = learning_rate
+        # learning_rate = decay_learning_rate(self.learning_rate,
+        #                                     self.global_step,
+        #                                     878,
+        #                                     0.05)
+        # self.lr = learning_rate
         # optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         optimizer = tf.train.AdamOptimizer(0.001)
 
@@ -254,14 +261,11 @@ class ElmoModel(object):
             input_feed[self.elmo_p] = self.elmo_batcher.batch_sentences([sx.tolist() for sx in tokens])
 
         output_feed = [
-            self.lr,
             self._train_op,
             self.loss
         ]
 
-        lr, _, loss = sess.run(output_feed, input_feed)
-
-        # print("Learning Rate =", lr)
+        _, loss = sess.run(output_feed, input_feed)
 
         return loss
 

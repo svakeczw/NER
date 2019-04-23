@@ -59,8 +59,7 @@ class LSTMCNNCRFeeder(object):
         Change labels to (batch_size, max_length)
         '''
 
-        tokens = list(map(lambda x: np.pad(x, (0, self._max_seq_length - len(x)), 'constant', constant_values=0),
-                          tokens))  # Pad zeors
+        tokens = list(map(lambda x: x + ['<pad>'] * (self._max_seq_length - len(x)), tokens))
         tokens = np.array(tokens, dtype=np.str)
 
         for i in range(len(chars)):

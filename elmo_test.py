@@ -140,7 +140,6 @@ def dump_topK(prefix, feeder, topK):
                 fp.write('\n')
 
 
-dump_topK('train', train_feeder, 10)
-dump_topK('dev', val_feeder, 10)
-dump_topK('test', test_feeder, 10)
-
+# dump_topK('train', train_feeder, 10)
+# dump_topK('dev', val_feeder, 10)
+# dump_topK('test', test_feeder, 10)

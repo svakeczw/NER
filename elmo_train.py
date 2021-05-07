@@ -5,6 +5,7 @@ import pickle
 import logging
 
 import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 from utils.feeder.LSTMCNNCRFeeder import LSTMCNNCRFeeder
 from utils.parser import parse_conll2003

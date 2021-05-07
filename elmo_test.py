@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 import numpy as np
 import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from utils.feeder.LSTMCNNCRFeeder import LSTMCNNCRFeeder
 from utils.parser import parse_conll2003
@@ -38,8 +39,12 @@ test_x, test_chars, test_la = test_set
 
 print('Load elmo...')
 elmo_batcher = Batcher('dev/vocab.txt', 50)
-elmo_bilm = BidirectionalLanguageModel('resources/elmo/elmo_2x4096_512_2048cnn_2xhighway_5.5B_options.json',
-                                       'resources/elmo/elmo_2x4096_512_2048cnn_2xhighway_5.5B_weights.hdf5')
+# elmo_bilm = BidirectionalLanguageModel('resources/elmo/elmo_2x4096_512_2048cnn_2xhighway_5.5B_options.json',
+#                                        'resources/elmo/elmo_2x4096_512_2048cnn_2xhighway_5.5B_weights.hdf5')
+
+elmo_bilm = BidirectionalLanguageModel('resources/elmo/elmo_2x1024_128_2048cnn_1xhighway_options.json',
+                                       'resources/elmo/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5')
+
 
 print('Load model...')
 
